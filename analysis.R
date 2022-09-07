@@ -20,8 +20,15 @@ df_wellbeing %>%
          life_satisfaction_zscore) %>% 
   pivot_longer(-c(household_income, log_household_income),
                values_to = "value", names_to = "metric") %>%  
-  ggplot(aes(x = log_household_income, y = value)) +
-  geom_line(aes(col = metric)) +
-  scale_x_continuous(name = "Income", breaks = log(x_labels), labels = dollar(x_labels))
+  ggplot(aes(x = log_household_income, y = value, color = metric)) +
+  geom_line() +
+  scale_x_continuous(name = "Income", breaks = log(x_labels), labels = dollar(x_labels)) +
+  scale_y_continuous(name = "Score") +
+  scale_color_manual(labels = c("Experienced Well-Being", "Life Satisfaction"),
+                     values = c("#ef5350", "#42a5f5")) +
+  theme_classic() +
+  theme(legend.title = element_blank(),
+        legend.position = c(0.8, 0.15))
+### Define a fixed width to the chart
 
 ### Test convertign the values based on inflation
