@@ -4,16 +4,19 @@ library(tidyr)
 library(scales)
 library(ggplot2)
 
+my_colors <- list(
+  light_grey = "#9e9e9e",
+  grey = "#616161",
+  orange = "#fb8c00"
+)
+
 theme_boa <- function(title_hjust = -0.14) {
-  light_grey <- "#9e9e9e"
-  grey <- "#616161"
-  
   theme_classic() +
-    theme(plot.title = element_text(hjust = title_hjust, colour = grey),
-          axis.line = element_line(colour = light_grey),
-          axis.ticks = element_line(colour = light_grey),
-          axis.text = element_text(colour = light_grey),
-          axis.title = element_text(colour = light_grey))
+    theme(plot.title = element_text(hjust = title_hjust, colour = my_colors$grey),
+          axis.line = element_line(colour = my_colors$light_grey),
+          axis.ticks = element_line(colour = my_colors$light_grey),
+          axis.text = element_text(colour = my_colors$light_grey),
+          axis.title = element_text(colour = my_colors$light_grey))
 }
 
 df <- read_csv("datasets/income_wellbeing.csv")
@@ -60,8 +63,7 @@ plot_lines <- function(dataset, x = "log_household_income",
   ggplot(dataset, aes(x = !!sym(x), y = value, color = metric)) +
     geom_line() +
     scale_x_param +
-    labs(title = "Respondents per household income",
-         y = "Score", x = "Household Income") +
+    labs(y = "Score", x = "Household Income") +
     scale_color_manual(values = c(wellbeing$color, life_satisfaction$color)) +
     theme_boa(title_hjust = -0.20) +
     theme(legend.position = "none",
@@ -79,9 +81,10 @@ plot_lines(df_wellbeing, x = "log_household_income",
 ### Define a fixed width to the chart when saving the image
 
 ### Adjusting the scale
+used_labels <- x_labels[c(1,4:6)]
 plot_lines(df_wellbeing, x = "household_income", 
-           scale_x_param = scale_x_continuous(breaks = x_labels[c(1,4:6)], 
-                                              labels = dollar(x_labels[c(1,4:6)])))
+           scale_x_param = scale_x_continuous(breaks = used_labels, 
+                                              labels = dollar(used_labels)))
 
 
 ### Plot distribution of respondents per money income
@@ -91,12 +94,32 @@ df_personcount <- df %>%
          household_income_k = paste(floor(household_income / 1e3), "k")) %>% 
   select(-ends_with(".personcount"))
 
+get_person_count <- function(income) {
+  df_personcount %>% 
+    filter(household_income == income) %>% 
+    pull(person_count)
+}
+
+get_bar_position <- function(income) {
+  which(df_personcount$household_income == income, arr.ind=TRUE)
+}
+
+label_bar <- function(income) {
+  annotate("text", label = get_person_count(income), size = 3, color = "#FFFFFF",
+           x = get_bar_position(income), y = get_person_count(income) - 100)
+}
+
 df_personcount %>% 
-  ggplot(aes(x = factor(household_income_k, levels = household_income_k), y = person_count)) + 
+  mutate(change_color = ifelse(person_count < 1000, TRUE, FALSE)) %>% 
+  ggplot(aes(x = factor(household_income_k, levels = household_income_k), 
+             y = person_count, fill = change_color)) + 
   geom_col() + 
   labs(title = "Respondents per household income",
        y = "Respondents", x = "Household Income") +
   scale_y_continuous(expand = expansion(mult = c(0, .08))) +
+  label_bar(400000) + label_bar(625000) +
+  scale_fill_manual(values = c(my_colors$grey, my_colors$orange)) +
   theme_boa() +
-  theme(axis.ticks.x = element_blank(),
+  theme(legend.position = "none",
+        axis.ticks.x = element_blank(),
         axis.line.x = element_blank())
