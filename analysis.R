@@ -4,9 +4,20 @@ library(tidyr)
 library(scales)
 library(ggplot2)
 
+theme_boa <- function() {
+  light_grey <- "#9e9e9e"
+  grey <- "#616161"
+  
+  theme_classic() +
+    theme(plot.title = element_text(hjust = -0.14, colour = grey),
+          axis.line = element_line(colour = light_grey),
+          axis.ticks = element_line(colour = light_grey),
+          axis.text = element_text(colour = light_grey),
+          axis.title = element_text(colour = light_grey))
+}
+
 df <- read_csv("datasets/income_wellbeing.csv")
 
-df_personcount <- df %>% select(ends_with(".personcount"))
 df_wellbeing <- df %>%
   select(household_income, log_household_income, 
          experienced_wellbeing_zscore.Mean,
@@ -25,7 +36,7 @@ plot_lines <- function(dataset, x = "log_household_income",
     scale_y_continuous(name = "Score") +
     scale_color_manual(labels = c("Experienced Well-Being", "Life Satisfaction"),
                        values = c("#ef5350", "#42a5f5")) +
-    theme_classic() +
+    theme_boa() +
     theme(legend.title = element_blank(),
           legend.position = c(0.8, 0.15))
 }
@@ -43,5 +54,20 @@ plot_lines(df_wellbeing, x = "household_income",
                                               breaks = x_labels[c(1,4:6)], 
                                               labels = dollar(x_labels[c(1,4:6)])))
 
-### Test converting the values based on inflation
+
 ### Plot distribution of respondents per money income
+df_personcount <- df %>% 
+  select("household_income", ends_with(".personcount")) %>% 
+  mutate(person_count = (select(df, ends_with(".personcount")) %>% do.call(pmax, .)),
+         household_income_k = paste(floor(household_income / 1e3), "k")) %>% 
+  select(-ends_with(".personcount"))
+
+df_personcount %>% 
+  ggplot(aes(x = factor(household_income_k, levels = household_income_k), y = person_count)) + 
+  geom_col() + 
+  labs(title = "Respondents per household income",
+       y = "Respondents", x = "Household Income") +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  theme_boa() +
+  theme(axis.ticks.x = element_blank(),
+        axis.line.x = element_blank())
