@@ -35,24 +35,45 @@ plot_lines <- function(dataset, x = "log_household_income",
     scale_x_param +
     scale_y_continuous(name = "Score") +
     scale_color_manual(labels = c("Experienced Well-Being", "Life Satisfaction"),
-                       values = c("#ef5350", "#42a5f5")) +
+                       values = c("#90caf9", "#b0bec5")) +
     theme_boa() +
-    theme(legend.title = element_blank(),
-          legend.position = c(0.8, 0.15))
+    theme(legend.position = "none",
+          plot.margin = unit(c(.5,6.5,.5,.5), "lines")) +
+    coord_cartesian(clip = "off")
 }
 
 ### Trying to replicate the chart from the paper
+get_last_score <- function(metric_name) {
+  df_wellbeing %>% 
+    filter(metric == metric_name) %>% 
+    filter(row_number() == n()) %>% 
+    pull(value)
+}
+
 plot_lines(df_wellbeing, x = "log_household_income", 
            scale_x_param = scale_x_continuous(name = "Income", 
                                               breaks = log(x_labels), 
-                                              labels = dollar(x_labels)))
+                                              labels = dollar(x_labels))) +
+  annotate("text", label = "Experienced Well-Being", hjust = .15,
+           size = 3, color = "#90caf9", fontface = "bold",
+           x = Inf, y = get_last_score("experienced_wellbeing_zscore")) +
+  annotate("text", label = "Life Satisfaction", hjust = .21,
+           size = 3, color = "#b0bec5", fontface = "bold",
+           x = Inf, y = get_last_score("life_satisfaction_zscore"))
+
 ### Define a fixed width to the chart when saving the image
 
 ### Adjusting the scale
 plot_lines(df_wellbeing, x = "household_income", 
            scale_x_param = scale_x_continuous(name = "Income", 
                                               breaks = x_labels[c(1,4:6)], 
-                                              labels = dollar(x_labels[c(1,4:6)])))
+                                              labels = dollar(x_labels[c(1,4:6)]))) +
+  annotate("text", label = "Experienced Well-Being", hjust = .15,
+           size = 3, color = "#90caf9", fontface = "bold",
+           x = Inf, y = get_last_score("experienced_wellbeing_zscore")) +
+  annotate("text", label = "Life Satisfaction", hjust = .21,
+           size = 3, color = "#b0bec5", fontface = "bold",
+           x = Inf, y = get_last_score("life_satisfaction_zscore"))
 
 
 ### Plot distribution of respondents per money income
