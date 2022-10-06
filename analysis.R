@@ -3,6 +3,7 @@ library(dplyr)
 library(tidyr)
 library(scales)
 library(ggplot2)
+library(janitor)
 
 my_colors <- list(
   light_grey = "#9e9e9e",
@@ -134,3 +135,17 @@ df_personcount %>%
   theme(legend.position = "none",
         axis.ticks.x = element_blank(),
         axis.line.x = element_blank())
+
+### Comparison between GDP and happiness
+df_gdp <- read_csv("datasets/WDIData.csv") %>% 
+  clean_names() %>% 
+  select(c(country_name, country_code, indicator_code, x2018:x2020)) %>%
+  # Getting only the "GDP per capita, PPP (constant 2017 international $)" indicator
+  filter(indicator_code == 'NY.GDP.PCAP.PP.KD') %>% 
+  # Filtering of the Country groups
+  slice(50:n()) %>% 
+  # Getting rows with at least 1 not null value
+  filter(rowSums(is.na(.)) < 3) %>% 
+  # Getting only the last not NA value
+  mutate(gdp = do.call(coalesce, rev(across(x2018:x2020)))) %>% 
+  select(c(country_name, country_code, gdp))
