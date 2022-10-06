@@ -141,7 +141,7 @@ df_gdp <- read_csv("datasets/WDIData.csv") %>%
   clean_names() %>% 
   select(c(country_name, country_code, indicator_code, x2018:x2020)) %>%
   # Getting only the "GDP per capita, PPP (constant 2017 international $)" indicator
-  filter(indicator_code == 'NY.GDP.PCAP.PP.KD') %>% 
+  filter(indicator_code == "NY.GDP.PCAP.PP.KD") %>% 
   # Filtering of the Country groups
   slice(50:n()) %>% 
   # Getting rows with at least 1 not null value
@@ -149,3 +149,9 @@ df_gdp <- read_csv("datasets/WDIData.csv") %>%
   # Getting only the last not NA value
   mutate(gdp = do.call(coalesce, rev(across(x2018:x2020)))) %>% 
   select(c(country_name, country_code, gdp))
+
+df_happiness <- read_csv2("datasets/happiness_scores.csv") %>% 
+  clean_names() %>% 
+  select(c(country, happiness_score)) %>% 
+  # Remove some characters indicating that the column value was not the last
+  mutate(country = gsub("*", "", .$country, fixed = TRUE))
