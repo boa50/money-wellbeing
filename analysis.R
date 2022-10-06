@@ -8,7 +8,8 @@ library(janitor)
 my_colors <- list(
   light_grey = "#9e9e9e",
   grey = "#616161",
-  orange = "#fb8c00"
+  orange = "#fb8c00",
+  blue = "#2196f3"
 )
 
 theme_boa <- function(title_hjust = -0.14) {
@@ -139,7 +140,7 @@ df_personcount %>%
 ### Comparison between GDP and happiness
 df_gdp <- read_csv("datasets/WDIData.csv") %>% 
   clean_names() %>% 
-  select(c(country_name, country_code, indicator_code, x2018:x2020)) %>%
+  select(c(country_name, indicator_code, x2018:x2020)) %>%
   # Getting only the "GDP per capita, PPP (constant 2017 international $)" indicator
   filter(indicator_code == "NY.GDP.PCAP.PP.KD") %>% 
   # Filtering of the Country groups
@@ -148,10 +149,71 @@ df_gdp <- read_csv("datasets/WDIData.csv") %>%
   filter(rowSums(is.na(.)) < 3) %>% 
   # Getting only the last not NA value
   mutate(gdp = do.call(coalesce, rev(across(x2018:x2020)))) %>% 
-  select(c(country_name, country_code, gdp))
+  select(c(country_name, gdp))
 
 df_happiness <- read_csv2("datasets/happiness_scores.csv") %>% 
   clean_names() %>% 
   select(c(country, happiness_score)) %>% 
   # Remove some characters indicating that the column value was not the last
   mutate(country = gsub("*", "", .$country, fixed = TRUE))
+
+# Checking names that don't match
+# There is no corresponding value on df_gdp for Taiwan
+df_happiness %>% 
+  merge(df_gdp, by.x = "country", by.y = "country_name", all.x = TRUE) %>% 
+  filter(is.na(gdp))
+
+# Replacing names that are different
+df_gdp$country_name <- df_gdp$country_name %>% 
+  gsub("Congo, Rep.", "Congo", ., fixed = TRUE) %>% 
+  gsub("Egypt, Arab Rep.", "Egypt", ., fixed = TRUE) %>% 
+  gsub("Gambia, The", "Gambia", ., fixed = TRUE) %>% 
+  gsub("Hong Kong SAR, China", "Hong Kong", ., fixed = TRUE) %>% 
+  gsub("Iran, Islamic Rep.", "Iran", ., fixed = TRUE) %>% 
+  gsub("Kyrgyz Republic", "Kyrgyzstan", ., fixed = TRUE) %>% 
+  gsub("Lao PDR", "Laos", ., fixed = TRUE) %>% 
+  gsub("West Bank and Gaza", "Palestine", ., fixed = TRUE) %>% 
+  gsub("Russian Federation", "Russia", ., fixed = TRUE) %>% 
+  gsub("Slovak Republic", "Slovakia", ., fixed = TRUE) %>% 
+  gsub("Korea, Rep.", "South Korea", ., fixed = TRUE) %>% 
+  gsub("Turkiye", "Turkey", ., fixed = TRUE) %>% 
+  gsub("Venezuela, RB", "Venezuela", ., fixed = TRUE) %>% 
+  gsub("Yemen, Rep.", "Yemen", ., fixed = TRUE)
+
+df_happiness$country <- df_happiness$country %>% 
+  gsub("Czechia", "Czech Republic", ., fixed = TRUE) %>% 
+  gsub("Eswatini, Kingdom of", "Eswatini", ., fixed = TRUE) %>% 
+  gsub("Hong Kong S.A.R. of China", "Hong Kong", ., fixed = TRUE) %>% 
+  gsub("Ivory Coast", "Cote d'Ivoire", ., fixed = TRUE) %>% 
+  gsub("North Cyprus", "Cyprus", ., fixed = TRUE) %>% 
+  gsub("Palestinian Territories", "Palestine", ., fixed = TRUE)
+
+df_happiness_gdp <- df_happiness %>% 
+  merge(df_gdp, by.x = "country", by.y = "country_name")
+
+happiness_median <- median(df_happiness_gdp$happiness_score)
+gdp_median <- median(df_happiness_gdp$gdp)
+
+df_happiness_gdp %>% 
+  mutate(change_color = ifelse(
+    .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE),
+    change_color_happiest = ifelse(
+      change_color & .$happiness_score == max(filter(., change_color)$happiness_score), TRUE, FALSE)) %>% 
+  filter(change_color_happiest)
+
+df_happiness_gdp %>% 
+  mutate(change_color = ifelse(
+    .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE)) %>% 
+  ggplot(aes(x = gdp, y = happiness_score, color = change_color)) +
+  geom_point(size = 3, alpha = 0.5) +
+  scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
+  geom_segment(x = 0, xend = Inf, y = happiness_median, yend = happiness_median,
+               linetype = "longdash", color = my_colors$grey, size = .25,
+               arrow = arrow(length = unit(7,"pt"))) +
+  geom_segment(x = gdp_median, xend = gdp_median, y = 0, yend = Inf,
+               linetype = "longdash", color = my_colors$grey, size = .25,
+               arrow = arrow(length = unit(7,"pt"))) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10)) +
+  scale_x_continuous(expand = expansion(mult = c(0, .08))) +
+  theme_boa() +
+  theme(legend.position = "none")
