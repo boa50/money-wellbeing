@@ -45,6 +45,12 @@ life_satisfaction <- list(
   label_hjust = .21
 )
 
+get_score <- function(metric_name, income) {
+  df_wellbeing %>% 
+    filter(metric == metric_name & household_income == income) %>% 
+    pull(value)
+}
+
 get_last_score <- function(metric_name) {
   df_wellbeing %>% 
     filter(metric == metric_name) %>% 
@@ -82,10 +88,15 @@ plot_lines(df_wellbeing, x = "log_household_income",
 
 ### Adjusting the scale
 used_labels <- x_labels[c(1,4:6)]
+best_income <- 137500
+
 plot_lines(df_wellbeing, x = "household_income", 
            scale_x_param = scale_x_continuous(breaks = used_labels, 
-                                              labels = dollar(used_labels)))
-
+                                              labels = dollar(used_labels))) +
+  geom_point(aes(x = best_income, y = get_score(life_satisfaction$metric, best_income)),
+             size = 3, colour = life_satisfaction$color) +
+  geom_point(aes(x = best_income, y = get_score(wellbeing$metric, best_income)),
+             size = 3, colour = wellbeing$color)
 
 ### Plot distribution of respondents per money income
 df_personcount <- df %>% 
