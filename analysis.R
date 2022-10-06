@@ -102,7 +102,7 @@ plot_lines(df_wellbeing, x = "household_income",
 df_personcount <- df %>% 
   select("household_income", ends_with(".personcount")) %>% 
   mutate(person_count = (select(df, ends_with(".personcount")) %>% do.call(pmax, .)),
-         household_income_k = paste(floor(household_income / 1e3), "k")) %>% 
+         household_income_k = paste("$", floor(household_income / 1e3), " k", sep = "")) %>% 
   select(-ends_with(".personcount"))
 
 get_person_count <- function(income) {
