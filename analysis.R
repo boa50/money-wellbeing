@@ -196,76 +196,61 @@ happiness_median <- median(df_happiness_gdp$happiness_score)
 gdp_median <- median(df_happiness_gdp$gdp)
 gdp_x_labels <- 0:6 * 20000
 
-df_happiness_gdp %>% 
-  mutate(change_color = ifelse(
-    .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE)) %>% 
-  ggplot(aes(x = gdp, y = happiness_score, color = change_color)) +
-  geom_point(size = 3, alpha = 0.5) +
-  scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
+plot_scatter <- function(df) {
+  ggplot(df, aes(x = gdp, y = happiness_score)) +
   geom_segment(x = 0, xend = Inf, 
                y = happiness_median, yend = happiness_median,
                linetype = "longdash", 
                color = my_colors$light_grey, 
                size = .25,
                arrow = arrow(length = unit(7,"pt"))) +
-  annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
-           size = 3, color = my_colors$light_grey,
-           x = Inf, y = happiness_median) +
-  geom_segment(x = gdp_median, xend = gdp_median, 
-               y = 0, yend = Inf,
-               linetype = "longdash", 
-               color = my_colors$light_grey, 
-               size = .25,
-               arrow = arrow(length = unit(7,"pt"))) +
-  annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
-           size = 3, color = my_colors$light_grey,
-           x = gdp_median, y = Inf) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10)) +
-  scale_x_continuous(expand = expansion(mult = c(0, .12)), 
-                     breaks = gdp_x_labels,
-                     labels = dollar(gdp_x_labels)) +
-  labs(y = "Happiness Score", x = "GDP per capita") +
-  theme_boa() +
-  theme(legend.position = "none")
+    annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
+             size = 3, color = my_colors$light_grey,
+             x = Inf, y = happiness_median) +
+    geom_segment(x = gdp_median, xend = gdp_median, 
+                 y = 0, yend = Inf,
+                 linetype = "longdash", 
+                 color = my_colors$light_grey, 
+                 size = .25,
+                 arrow = arrow(length = unit(7,"pt"))) +
+    annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
+             size = 3, color = my_colors$light_grey,
+             x = gdp_median, y = Inf) +
+    scale_x_continuous(expand = expansion(mult = c(0, .12)), 
+                       breaks = gdp_x_labels,
+                       labels = dollar(gdp_x_labels)) +
+    labs(y = "Happiness Score", x = "GDP per capita") +
+    theme_boa() +
+    theme(legend.position = "none")
+}
 
+df_happiness_gdp %>% 
+  mutate(change_color = ifelse(
+    .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE)) %>% 
+  plot_scatter() +
+  geom_point(size = 3, alpha = 0.5, aes(color = change_color)) +
+  scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10))
 
 happiness_range <- list(low = 5.25, high = 6.75)
 happiness_y_ticks <- c(0, 2.5, 5.0, happiness_range$low, happiness_range$high, 7.5, 10.0)
-nrow(df_happiness_gdp %>% 
+happiness_range_country_percent <- nrow(df_happiness_gdp %>% 
        filter(happiness_score >= happiness_range$low & 
                 happiness_score <= happiness_range$high)) / nrow(df_happiness_gdp)
 
 df_happiness_gdp %>% 
-  ggplot(aes(x = gdp, y = happiness_score)) +
+  plot_scatter() +
   geom_point(size = 3, alpha = 0.5, color = my_colors$light_grey) +
-  geom_segment(x = 0, xend = Inf, 
-               y = happiness_median, yend = happiness_median,
-               linetype = "longdash", 
-               color = my_colors$light_grey, 
-               size = .25,
-               arrow = arrow(length = unit(7,"pt"))) +
-  annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
-           size = 3, color = my_colors$light_grey,
-           x = Inf, y = happiness_median) +
-  geom_segment(x = gdp_median, xend = gdp_median, 
-               y = 0, yend = Inf,
-               linetype = "longdash", 
-               color = my_colors$light_grey, 
-               size = .25,
-               arrow = arrow(length = unit(7,"pt"))) +
-  annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
-           size = 3, color = my_colors$light_grey,
-           x = gdp_median, y = Inf) +
   annotate("rect", fill = my_colors$blue, alpha = 0.2,
            xmin = 0, xmax = Inf, 
            ymin = happiness_range$low, ymax = happiness_range$high) +
+  annotate("text", label = percent(happiness_range_country_percent),
+           size = 15, color = my_colors$blue, fontface= "bold",
+           x = 80000, y = 4, hjust = 1, vjust = 0) +
+  annotate("text", label = "of the countries are represented \n by the blue area",
+           size = 4, color = my_colors$light_grey, 
+           x = 80000, y = 4, hjust = -0.02, vjust = 0) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10),
                      breaks = happiness_y_ticks) +
-  scale_x_continuous(expand = expansion(mult = c(0, .12)), 
-                     breaks = gdp_x_labels,
-                     labels = dollar(gdp_x_labels)) +
-  labs(y = "Happiness Score", x = "GDP per capita") +
-  theme_boa() +
-  theme(legend.position = "none",
-        axis.text.y = element_markdown(face = ifelse(happiness_y_ticks %in% 
+  theme(axis.text.y = element_markdown(face = ifelse(happiness_y_ticks %in% 
                                                    c(happiness_range$low, happiness_range$high), "bold", "plain")))
