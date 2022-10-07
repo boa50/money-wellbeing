@@ -4,6 +4,7 @@ library(tidyr)
 library(scales)
 library(ggplot2)
 library(janitor)
+library(ggtext)
 
 my_colors <- list(
   light_grey = "#9e9e9e",
@@ -226,3 +227,45 @@ df_happiness_gdp %>%
   labs(y = "Happiness Score", x = "GDP per capita") +
   theme_boa() +
   theme(legend.position = "none")
+
+
+happiness_range <- list(low = 5.25, high = 6.75)
+happiness_y_ticks <- c(0, 2.5, 5.0, happiness_range$low, happiness_range$high, 7.5, 10.0)
+nrow(df_happiness_gdp %>% 
+       filter(happiness_score >= happiness_range$low & 
+                happiness_score <= happiness_range$high)) / nrow(df_happiness_gdp)
+
+df_happiness_gdp %>% 
+  ggplot(aes(x = gdp, y = happiness_score)) +
+  geom_point(size = 3, alpha = 0.5, color = my_colors$light_grey) +
+  geom_segment(x = 0, xend = Inf, 
+               y = happiness_median, yend = happiness_median,
+               linetype = "longdash", 
+               color = my_colors$light_grey, 
+               size = .25,
+               arrow = arrow(length = unit(7,"pt"))) +
+  annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
+           size = 3, color = my_colors$light_grey,
+           x = Inf, y = happiness_median) +
+  geom_segment(x = gdp_median, xend = gdp_median, 
+               y = 0, yend = Inf,
+               linetype = "longdash", 
+               color = my_colors$light_grey, 
+               size = .25,
+               arrow = arrow(length = unit(7,"pt"))) +
+  annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
+           size = 3, color = my_colors$light_grey,
+           x = gdp_median, y = Inf) +
+  annotate("rect", fill = my_colors$blue, alpha = 0.2,
+           xmin = 0, xmax = Inf, 
+           ymin = happiness_range$low, ymax = happiness_range$high) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10),
+                     breaks = happiness_y_ticks) +
+  scale_x_continuous(expand = expansion(mult = c(0, .12)), 
+                     breaks = gdp_x_labels,
+                     labels = dollar(gdp_x_labels)) +
+  labs(y = "Happiness Score", x = "GDP per capita") +
+  theme_boa() +
+  theme(legend.position = "none",
+        axis.text.y = element_markdown(face = ifelse(happiness_y_ticks %in% 
+                                                   c(happiness_range$low, happiness_range$high), "bold", "plain")))
