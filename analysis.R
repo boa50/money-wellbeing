@@ -193,13 +193,7 @@ df_happiness_gdp <- df_happiness %>%
 
 happiness_median <- median(df_happiness_gdp$happiness_score)
 gdp_median <- median(df_happiness_gdp$gdp)
-
-df_happiness_gdp %>% 
-  mutate(change_color = ifelse(
-    .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE),
-    change_color_happiest = ifelse(
-      change_color & .$happiness_score == max(filter(., change_color)$happiness_score), TRUE, FALSE)) %>% 
-  filter(change_color_happiest)
+gdp_x_labels <- 0:6 * 20000
 
 df_happiness_gdp %>% 
   mutate(change_color = ifelse(
@@ -207,13 +201,28 @@ df_happiness_gdp %>%
   ggplot(aes(x = gdp, y = happiness_score, color = change_color)) +
   geom_point(size = 3, alpha = 0.5) +
   scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
-  geom_segment(x = 0, xend = Inf, y = happiness_median, yend = happiness_median,
-               linetype = "longdash", color = my_colors$grey, size = .25,
+  geom_segment(x = 0, xend = Inf, 
+               y = happiness_median, yend = happiness_median,
+               linetype = "longdash", 
+               color = my_colors$light_grey, 
+               size = .25,
                arrow = arrow(length = unit(7,"pt"))) +
-  geom_segment(x = gdp_median, xend = gdp_median, y = 0, yend = Inf,
-               linetype = "longdash", color = my_colors$grey, size = .25,
+  annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
+           size = 3, color = my_colors$light_grey,
+           x = Inf, y = happiness_median) +
+  geom_segment(x = gdp_median, xend = gdp_median, 
+               y = 0, yend = Inf,
+               linetype = "longdash", 
+               color = my_colors$light_grey, 
+               size = .25,
                arrow = arrow(length = unit(7,"pt"))) +
+  annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
+           size = 3, color = my_colors$light_grey,
+           x = gdp_median, y = Inf) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10)) +
-  scale_x_continuous(expand = expansion(mult = c(0, .08))) +
+  scale_x_continuous(expand = expansion(mult = c(0, .12)), 
+                     breaks = gdp_x_labels,
+                     labels = dollar(gdp_x_labels)) +
+  labs(y = "Happiness Score", x = "GDP per capita") +
   theme_boa() +
   theme(legend.position = "none")
