@@ -13,9 +13,13 @@ my_colors <- list(
   blue = "#2196f3"
 )
 
-theme_boa <- function(title_hjust = 0) {
+save_plot <- function(plot_name = "myplot") {
+  ggsave(paste(plot_name, ".png", sep = ""), width = 3840, height = 2460, units = "px", dpi = 425)
+}
+
+theme_boa <- function() {
   theme_classic() +
-    theme(plot.title = element_text(hjust = title_hjust, colour = my_colors$grey),
+    theme(plot.title = element_text(hjust = 0, colour = my_colors$grey),
           plot.title.position = "plot",
           axis.line = element_line(colour = my_colors$light_grey),
           axis.ticks = element_line(colour = my_colors$light_grey),
@@ -75,7 +79,7 @@ plot_lines <- function(dataset, x = "log_household_income",
     scale_x_param +
     labs(y = "Score", x = "Household Income") +
     scale_color_manual(values = c(wellbeing$color, life_satisfaction$color)) +
-    theme_boa(title_hjust = -0.20) +
+    theme_boa() +
     theme(legend.position = "none",
           plot.margin = unit(c(.5,6.5,.5,.5), "lines")) +
     coord_cartesian(clip = "off") +
@@ -88,20 +92,27 @@ plot_lines(df_wellbeing, x = "log_household_income",
            scale_x_param = scale_x_continuous(breaks = log(x_labels), 
                                               labels = dollar(x_labels)))
 
-### Define a fixed width to the chart when saving the image
+save_plot("lines_original")
 
 ### Adjusting the scale
 used_labels <- x_labels[c(1,4:6)]
 best_income <- 137500
 
 
-plot_lines(df_wellbeing, x = "household_income", 
+lines_adjusted <- plot_lines(df_wellbeing, x = "household_income", 
            scale_x_param = scale_x_continuous(breaks = used_labels, 
-                                              labels = dollar(used_labels))) +
+                                              labels = dollar(used_labels))) 
+lines_adjusted
+
+save_plot("lines_scaled")
+
+lines_adjusted +
   geom_point(aes(x = best_income, y = get_score(life_satisfaction$metric, best_income)),
              size = 3, colour = life_satisfaction$color) +
   geom_point(aes(x = best_income, y = get_score(wellbeing$metric, best_income)),
              size = 3, colour = wellbeing$color)
+
+save_plot("lines_scaled_w_points")
 
 ### Plot distribution of respondents per money income
 df_personcount <- df %>% 
@@ -135,16 +146,12 @@ df_personcount %>%
   scale_y_continuous(expand = expansion(mult = c(0, .08))) +
   label_bar(400000) + label_bar(625000) +
   scale_fill_manual(values = c(my_colors$grey, my_colors$orange)) +
-  theme_boa(title_hjust = 0) +
+  theme_boa() +
   theme(legend.position = "none",
         axis.ticks.x = element_blank(),
         axis.line.x = element_blank()) 
 
-# theme(plot.caption = element_text(hjust = 0, face= "italic"), #Default is hjust=1
-#       plot.title.position = "plot", #NEW parameter. Apply for subtitle too.
-#       plot.caption.position =  "plot") #NEW parameter
-
-ggsave("myplot.png", width = 1920, height = 1230, units = "px", dpi = 225)
+save_plot("personcount_histogram")
 
 ### Comparison between GDP and happiness
 df_gdp <- read_csv("datasets/WDIData.csv") %>% 
@@ -240,6 +247,8 @@ df_happiness_gdp %>%
   scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10))
 
+save_plot("happier_and_poor")
+
 happiness_range <- list(low = 5.25, high = 6.75)
 happiness_y_ticks <- c(0, 2.5, 5.0, happiness_range$low, happiness_range$high, 7.5, 10.0)
 happiness_range_country_percent <- nrow(df_happiness_gdp %>% 
@@ -262,3 +271,5 @@ df_happiness_gdp %>%
                      breaks = happiness_y_ticks) +
   theme(axis.text.y = element_markdown(face = ifelse(happiness_y_ticks %in% 
                                                    c(happiness_range$low, happiness_range$high), "bold", "plain")))
+
+save_plot("happier_indifferent")
