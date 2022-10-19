@@ -13,9 +13,10 @@ my_colors <- list(
   blue = "#2196f3"
 )
 
-theme_boa <- function(title_hjust = -0.14) {
+theme_boa <- function(title_hjust = 0) {
   theme_classic() +
     theme(plot.title = element_text(hjust = title_hjust, colour = my_colors$grey),
+          plot.title.position = "plot",
           axis.line = element_line(colour = my_colors$light_grey),
           axis.ticks = element_line(colour = my_colors$light_grey),
           axis.text = element_text(colour = my_colors$light_grey),
@@ -93,6 +94,7 @@ plot_lines(df_wellbeing, x = "log_household_income",
 used_labels <- x_labels[c(1,4:6)]
 best_income <- 137500
 
+
 plot_lines(df_wellbeing, x = "household_income", 
            scale_x_param = scale_x_continuous(breaks = used_labels, 
                                               labels = dollar(used_labels))) +
@@ -133,10 +135,16 @@ df_personcount %>%
   scale_y_continuous(expand = expansion(mult = c(0, .08))) +
   label_bar(400000) + label_bar(625000) +
   scale_fill_manual(values = c(my_colors$grey, my_colors$orange)) +
-  theme_boa() +
+  theme_boa(title_hjust = 0) +
   theme(legend.position = "none",
         axis.ticks.x = element_blank(),
-        axis.line.x = element_blank())
+        axis.line.x = element_blank()) 
+
+# theme(plot.caption = element_text(hjust = 0, face= "italic"), #Default is hjust=1
+#       plot.title.position = "plot", #NEW parameter. Apply for subtitle too.
+#       plot.caption.position =  "plot") #NEW parameter
+
+ggsave("myplot.png", width = 1920, height = 1230, units = "px", dpi = 225)
 
 ### Comparison between GDP and happiness
 df_gdp <- read_csv("datasets/WDIData.csv") %>% 
