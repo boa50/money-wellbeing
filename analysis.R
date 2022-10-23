@@ -7,10 +7,13 @@ library(janitor)
 library(ggtext)
 
 my_colors <- list(
-  light_grey = "#9e9e9e",
-  grey = "#616161",
-  orange = "#fb8c00",
-  blue = "#2196f3"
+  title = "#616161",
+  axis = "#9e9e9e",
+  main = "#1976d2",
+  no_emphasis = "#757575",
+  divergent = "#f57c00",
+  line_main = "#42a5f5",
+  line_complementary = "#78909c"
 )
 
 save_plot <- function(plot_name = "myplot") {
@@ -19,12 +22,12 @@ save_plot <- function(plot_name = "myplot") {
 
 theme_boa <- function() {
   theme_classic() +
-    theme(plot.title = element_text(hjust = 0, colour = my_colors$grey),
+    theme(plot.title = element_text(hjust = 0, colour = my_colors$title),
           plot.title.position = "plot",
-          axis.line = element_line(colour = my_colors$light_grey),
-          axis.ticks = element_line(colour = my_colors$light_grey),
-          axis.text = element_text(colour = my_colors$light_grey),
-          axis.title = element_text(colour = my_colors$light_grey))
+          axis.line = element_line(colour = my_colors$axis),
+          axis.ticks = element_line(colour = my_colors$axis),
+          axis.text = element_text(colour = my_colors$axis),
+          axis.title = element_text(colour = my_colors$axis))
 }
 
 df <- read_csv("datasets/income_wellbeing.csv")
@@ -42,14 +45,14 @@ x_labels <- min(df_wellbeing$household_income) * 2^c(0:5)
 wellbeing <- list(
   metric = "experienced_wellbeing_zscore",
   label = "Experienced Well-Being",
-  color = "#90caf9",
+  color = my_colors$line_main,
   label_hjust = .15
 )
 
 life_satisfaction <- list(
   metric = "life_satisfaction_zscore",
   label = "Life Satisfaction",
-  color = "#b0bec5",
+  color = my_colors$line_complementary,
   label_hjust = .21
 )
 
@@ -81,7 +84,7 @@ plot_lines <- function(dataset, x = "log_household_income",
     scale_color_manual(values = c(wellbeing$color, life_satisfaction$color)) +
     theme_boa() +
     theme(legend.position = "none",
-          plot.margin = unit(c(.5,6.5,.5,.5), "lines")) +
+          plot.margin = unit(c(.5,7,.5,.5), "lines")) +
     coord_cartesian(clip = "off") +
     annotate_line(wellbeing) +
     annotate_line(life_satisfaction)
@@ -145,7 +148,7 @@ df_personcount %>%
        y = "Respondents", x = "Household Income") +
   scale_y_continuous(expand = expansion(mult = c(0, .08))) +
   label_bar(400000) + label_bar(625000) +
-  scale_fill_manual(values = c(my_colors$grey, my_colors$orange)) +
+  scale_fill_manual(values = c(my_colors$no_emphasis, my_colors$divergent)) +
   theme_boa() +
   theme(legend.position = "none",
         axis.ticks.x = element_blank(),
@@ -216,20 +219,20 @@ plot_scatter <- function(df) {
   geom_segment(x = 0, xend = Inf, 
                y = happiness_median, yend = happiness_median,
                linetype = "longdash", 
-               color = my_colors$light_grey, 
+               color = my_colors$axis, 
                size = .25,
                arrow = arrow(length = unit(7,"pt"))) +
     annotate("text", label = "Richer", hjust = 1.25, vjust = -0.5,
-             size = 3, color = my_colors$light_grey,
+             size = 3, color = my_colors$axis,
              x = Inf, y = happiness_median) +
     geom_segment(x = gdp_median, xend = gdp_median, 
                  y = 0, yend = Inf,
                  linetype = "longdash", 
-                 color = my_colors$light_grey, 
+                 color = my_colors$axis, 
                  size = .25,
                  arrow = arrow(length = unit(7,"pt"))) +
     annotate("text", label = "Happier", hjust = 1.25, vjust = -0.5, angle = 90,
-             size = 3, color = my_colors$light_grey,
+             size = 3, color = my_colors$axis,
              x = gdp_median, y = Inf) +
     scale_x_continuous(expand = expansion(mult = c(0, .12)), 
                        breaks = gdp_x_labels,
@@ -244,7 +247,7 @@ df_happiness_gdp %>%
     .$gdp <= gdp_median & .$happiness_score >= happiness_median, TRUE, FALSE)) %>% 
   plot_scatter() +
   geom_point(size = 3, alpha = 0.5, aes(color = change_color)) +
-  scale_color_manual(values = c(my_colors$light_grey, my_colors$blue)) +
+  scale_color_manual(values = c(my_colors$no_emphasis, my_colors$main)) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10))
 
 save_plot("happier_and_poor")
@@ -257,15 +260,15 @@ happiness_range_country_percent <- nrow(df_happiness_gdp %>%
 
 df_happiness_gdp %>% 
   plot_scatter() +
-  geom_point(size = 3, alpha = 0.5, color = my_colors$light_grey) +
-  annotate("rect", fill = my_colors$blue, alpha = 0.2,
+  geom_point(size = 3, alpha = 0.5, color = my_colors$no_emphasis) +
+  annotate("rect", fill = my_colors$main, alpha = 0.2,
            xmin = 0, xmax = Inf, 
            ymin = happiness_range$low, ymax = happiness_range$high) +
   annotate("text", label = percent(happiness_range_country_percent),
-           size = 15, color = my_colors$blue, fontface= "bold",
+           size = 15, color = my_colors$main, fontface= "bold",
            x = 80000, y = 4, hjust = 1, vjust = 0) +
   annotate("text", label = "of the countries are represented \n by the blue area",
-           size = 4, color = my_colors$light_grey, 
+           size = 4, color = my_colors$no_emphasis, 
            x = 80000, y = 4, hjust = -0.02, vjust = 0) +
   scale_y_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, 10),
                      breaks = happiness_y_ticks) +
