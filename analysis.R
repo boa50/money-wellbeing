@@ -144,8 +144,7 @@ df_personcount %>%
   ggplot(aes(x = factor(household_income_k, levels = household_income_k), 
              y = person_count, fill = change_color)) + 
   geom_col() + 
-  labs(title = "Respondents per household income",
-       y = "Respondents", x = "Household Income") +
+  labs(y = "Respondents", x = "Household Income") +
   scale_y_continuous(expand = expansion(mult = c(0, .08))) +
   label_bar(400000) + label_bar(625000) +
   scale_fill_manual(values = c(my_colors$no_emphasis, my_colors$divergent)) +
