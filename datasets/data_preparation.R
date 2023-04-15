@@ -41,7 +41,9 @@ df_happiness <- read_csv2("datasets/happiness_scores.csv") %>%
   clean_names() %>% 
   select(c(country, happiness_score)) %>% 
   # Remove some characters indicating that the column value was not the last
-  mutate(country = gsub("*", "", .$country, fixed = TRUE))
+  mutate(country = gsub("*", "", .$country, fixed = TRUE),
+         # Return the decimal points
+         happiness_score = happiness_score / 1000)
 
 # Checking names that don't match
 # There is no corresponding value on df_gdp for Taiwan
